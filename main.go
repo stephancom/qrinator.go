@@ -11,5 +11,9 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-  fmt.Fprintf(w, "hello world!")
+  if r.Method == "DELETE" {
+    fmt.Fprintf(w, "clear cache")  
+  } else {
+    fmt.Fprintf(w, "build QR")  
+  }
 }
