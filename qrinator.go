@@ -12,6 +12,10 @@ import (
   qrcode "github.com/skip2/go-qrcode"
 )
 
+const BaseUrl = "http://github.com"
+const LogoUrl = "https://github.githubassets.com/images/modules/logos_page/Octocat.png"
+const Size    = 384
+
 func main() {
   http.HandleFunc("/", handler)
   log.Println("Listening on :8080")
@@ -19,13 +23,13 @@ func main() {
 }
 
 func url(payload string) string {
-  return "http://stephan.com" + payload
+  return BaseUrl + payload
 }
 
 func buildQr(payload string) image.Image {
   img, err := qrcode.New(url(payload), qrcode.Medium)
   if err != nil { log.Fatalf("unable to encode") }
-  image := img.Image(256)
+  image := img.Image(Size)
   // placeholder for processing to come
   image = imaging.Rotate(image, 10.0, color.Black)
   return image
