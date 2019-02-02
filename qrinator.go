@@ -5,7 +5,6 @@ import (
   "log"
   "bytes"
   "image"
-  "image/color"
   "strconv"
   "net/http"
   "github.com/disintegration/imaging"
@@ -15,6 +14,10 @@ import (
 const BaseUrl = "http://github.com"
 const LogoUrl = "https://github.githubassets.com/images/modules/logos_page/Octocat.png"
 const Size    = 384
+const Offset  = Size / 3
+const Inset   = (Size - Offset) / 2
+
+// var logo = image.Image
 
 func main() {
   http.HandleFunc("/", handler)
@@ -26,12 +29,18 @@ func url(payload string) string {
   return BaseUrl + payload
 }
 
+func logo() image.Image {
+  response, _ := http.Get(LogoUrl)
+  defer response.Body.Close()
+  logo, _, _ := image.Decode(response.Body)
+  logo = imaging.Resize(logo, Inset, Inset, imaging.Lanczos)
+  return logo
+}
+
 func buildQr(payload string) image.Image {
-  img, err := qrcode.New(url(payload), qrcode.Medium)
-  if err != nil { log.Fatalf("unable to encode") }
+  img, _ := qrcode.New(url(payload), qrcode.Medium)
   image := img.Image(Size)
-  // placeholder for processing to come
-  image = imaging.Rotate(image, 10.0, color.Black)
+  image = imaging.OverlayCenter(image, logo(), 1.0)
   return image
 }
 
