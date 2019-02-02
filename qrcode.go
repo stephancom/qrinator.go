@@ -4,6 +4,8 @@ import (
   "fmt"
   "log"
   "bytes"
+  "image"
+  "image/color"
   "strconv"
   "net/http"
   "github.com/disintegration/imaging"
@@ -16,31 +18,28 @@ func main() {
   http.ListenAndServe(":8080", nil)
 }
 
-func 
+func url(payload string) string {
+  return "http://stephan.com" + payload
+}
+
+func buildQr(payload string) image.Image {
+  img, err := qrcode.New(url(payload), qrcode.Medium)
+  if err != nil { log.Fatalf("unable to encode") }
+  image := img.Image(256)
+  // placeholder for processing to come
+  image = imaging.Rotate(image, 10.0, color.Black)
+  return image
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
   if r.Method == "DELETE" {
     fmt.Fprintf(w, "clear cache")  
   } else {
-    url := "http://stephan.com" + r.URL.Path
-    var png[]byte
-    png, err := qrcode.Encode(url, qrcode.Medium, 256)
-    if err != nil {
-      log.FatalF("unable to encode")
-    }
+    buffer := new(bytes.Buffer)
+    imaging.Encode(buffer, buildQr(r.URL.Path), imaging.PNG)
+
     w.Header().Set("Content-Type", "image/png")
-    w.Header().Set("Content-Length", strconv.Itoa(len(png)))
-
-    src, err := imaging.Decode(bytes.NewReader(png))
-    if err != nil {
-      log.Fatalf("failed to decode image: %v", err)
-    }
-
-    imaging.Encode(w, src, imaging.PNG)
-    // w.Write(png)
-    // if _, err := w.Write(png); err != nil {
-    //     log.Println("unable to write image.")
-    // }
-
+    w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
+    w.Write(buffer.Bytes())
   }
 }
