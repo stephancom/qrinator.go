@@ -17,7 +17,15 @@ const Size    = 384
 const Offset  = Size / 3
 const Inset   = (Size - Offset) / 2
 
-// var logo = image.Image
+var logo image.Image
+
+func init() {
+  log.Println("read logo")
+  response, _ := http.Get(LogoUrl)
+  defer response.Body.Close()
+  logo, _, _ = image.Decode(response.Body)
+  logo = imaging.Resize(logo, Inset, Inset, imaging.Lanczos)
+}
 
 func main() {
   http.HandleFunc("/", handler)
@@ -29,24 +37,16 @@ func url(payload string) string {
   return BaseUrl + payload
 }
 
-func logo() image.Image {
-  response, _ := http.Get(LogoUrl)
-  defer response.Body.Close()
-  logo, _, _ := image.Decode(response.Body)
-  logo = imaging.Resize(logo, Inset, Inset, imaging.Lanczos)
-  return logo
-}
-
 func buildQr(payload string) image.Image {
   img, _ := qrcode.New(url(payload), qrcode.Medium)
   image := img.Image(Size)
-  image = imaging.OverlayCenter(image, logo(), 1.0)
+  image = imaging.OverlayCenter(image, logo, 1.0)
   return image
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
   if r.Method == "DELETE" {
-    fmt.Fprintf(w, "clear cache")  
+    fmt.Fprintf(w, "clear cache")
   } else {
     buffer := new(bytes.Buffer)
     imaging.Encode(buffer, buildQr(r.URL.Path), imaging.PNG)
